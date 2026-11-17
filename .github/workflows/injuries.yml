@@ -1,7 +1,6 @@
 # Live injury report for the MPM site (docs/SITE_HOSTING.md in the model repo). Every 15 minutes, 11:00-02:00 ET
 # (UTC windows cover both EST and EDT): fetch the latest official NBA injury report; when a newer snapshot appears,
-# commit injuries.json here and upload it to the site's R2 bucket (data/live/injuries.json).
-# Secrets: CLOUDFLARE_API_TOKEN (R2 edit), CLOUDFLARE_ACCOUNT_ID.
+# commit injuries.json here; the site reads it from raw.githubusercontent.com. No secrets needed.
 name: injuries
 on:
   schedule:
@@ -20,14 +19,9 @@ jobs:
         with: { python-version: '3.12' }
       - run: pip install -r requirements.txt
       - run: python scrape.py injuries.json
-      - name: Commit and upload on change
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Commit on change
         run: |
           if [ -z "$(git status --porcelain injuries.json)" ]; then echo "no new report"; exit 0; fi
-          npx --yes wrangler@3.114.0 r2 object put mpm-data/data/live/injuries.json --file injuries.json \
-            --content-type application/json
           git config user.name "injury-bot"; git config user.email "injury-bot@users.noreply.github.com"
           git add injuries.json; git commit -m "injury report $(python -c 'import json;print(json.load(open("injuries.json"))["snapshot"])')"
           git push
