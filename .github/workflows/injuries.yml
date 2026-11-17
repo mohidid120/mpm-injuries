@@ -27,7 +27,7 @@ jobs:
         run: |
           if [ -z "$(git status --porcelain injuries.json)" ]; then echo "no new report"; exit 0; fi
           npx --yes wrangler@3.114.0 r2 object put mpm-data/data/live/injuries.json --file injuries.json \
-            --content-type application/json --remote
+            --content-type application/json
           git config user.name "injury-bot"; git config user.email "injury-bot@users.noreply.github.com"
           git add injuries.json; git commit -m "injury report $(python -c 'import json;print(json.load(open("injuries.json"))["snapshot"])')"
           git push
